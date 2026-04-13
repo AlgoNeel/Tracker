@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminal | Premium Trade Journal (View Only)</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M30 40v20M30 45h6v10h-6zM50 30v40M50 35h6v30h-6zM70 50v20M70 55h6v10h-6z%22 stroke=%22%23818cf8%22 stroke-width=%224%22 fill=%22none%22/></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(226, 232, 240, 0.8);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #f1f5f9, #ffffff);
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 1.5rem;
+        }
+
+        header {
+            flex-shrink: 0;
+            padding: 1.5rem 0;
+        }
+
+        .table-container-outer {
+            flex: 1;
+            min-height: 0;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-wrap {
+            flex: 1;
+            overflow: auto;
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        footer {
+            flex-shrink: 0;
+            padding: 1rem 0;
+            border-top: 1px solid #f1f5f9;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            min-width: 1100px;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.075em;
+            padding: 1.25rem 1rem;
+            color: #64748b;
+        }
+
+        td {
+            border-bottom: 1px solid #f8fafc;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        tr:hover td {
+            background-color: #fcfdfe;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 18px;
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 140px;
+        }
+
+        .details-row { background: #fbfcfe; display: none; }
+        .details-row.active { display: table-row; }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+            margin: 1rem;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .win-tag { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+        .loss-tag { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+        .be-tag { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+        .action-pill {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            display: inline-block;
+        }
+
+        .read-only-val {
+            padding: 0.5rem;
+            font-weight: 500;
+            display: block;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; border: 2px solid white; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    </style>
+</head>
+<body>
+    <div id="modalContainer"></div>
+
+    <div class="app-shell">
+        <header>
+            <div class="flex flex-col lg:flex-row justify-between items-end lg:items-center gap-6">
+                <div class="flex items-center gap-5">
+                    <div class="bg-slate-900 p-2.5 rounded-2xl shadow-xl shadow-slate-200">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                            <polyline points="16 7 22 7 22 13"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Terminal.</h1>
+                            <span class="px-2 py-0.5 rounded-full bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest">
+                                Read Only
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-6 mt-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Initial Cap</span>
+                                <span id="displayInitialCapital" class="text-sm font-bold text-slate-600">0.00</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Equity</span>
+                                <span id="currentBalance" class="text-sm font-extrabold text-slate-900">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-stretch gap-3 overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
+                    <div class="stat-card">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Trades</span>
+                        <span id="statTotal" class="text-lg font-extrabold leading-none">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Win Rate</span>
+                        <div class="flex items-center gap-2">
+                            <span id="statWinRate" class="text-lg font-extrabold leading-none text-indigo-600">0%</span>
+                            <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div id="winRateFill" class="h-full bg-indigo-500 transition-all duration-700" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Trading Days</span>
+                        <span id="statDuration" class="text-lg font-extrabold leading-none">0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Live Dashboard</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="table-container-outer">
+            <div class="table-wrap">
+                <table id="journalTable">
+                    <thead>
+                        <tr>
+                            <th class="w-12">#</th>
+                            <th class="w-40">Date</th>
+                            <th class="w-40">Instrument</th>
+                            <th class="w-24">Side</th>
+                            <th class="w-32">Outcome</th>
+                            <th class="text-right w-28">R Multiple</th>
+                            <th class="text-right w-28">Fees</th>
+                            <th class="text-right w-36 font-bold">Net PnL</th>
+                            <th class="text-center w-24">Review</th>
+                            <th class="text-center w-32">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="10" class="text-center py-20 text-slate-400">Loading journal data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <footer>
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p>&copy; <span id="year"></span> Swapneel Das &bull; Portfolio Display</p>
+                <div class="flex gap-6">
+                    <span class="hover:text-slate-600 cursor-pointer transition" onclick="showModal('disclaimer')">Disclaimer</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let trades = [];
+        let initialCapital = 0;
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        /**
+         * Fetches data from data.json with cache busting
+         */
+        async function fetchData() {
+            try {
+                // cache busting prevents GitHub Pages from serving stale data
+                const response = await fetch(`data.json?t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                
+                const data = await response.json();
+                trades = data.trades || [];
+                initialCapital = parseFloat(data.initialCapital) || 0;
+                
+                console.log("Data loaded:", { trades: trades.length, capital: initialCapital });
+                render();
+            } catch (error) {
+                console.error("Failed to fetch data.json:", error);
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center py-20 text-rose-500">
+                            <strong>Connection Error:</strong> ${error.message}<br>
+                            <span class="text-slate-400 text-xs uppercase mt-2 block">Ensure data.json is in the same directory as index.html</span>
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function calculateStats() {
+            let net = 0, wins = 0, losses = 0, uniqueDates = new Set();
+            trades.forEach(t => {
+                const pnl = parseFloat(t.pnl) || 0;
+                const fee = parseFloat(t.commission) || 0;
+                net += (pnl - fee);
+                if (t.result === 'Win') wins++;
+                else if (t.result === 'Loss') losses++;
+                if (t.date) uniqueDates.add(t.date);
+            });
+
+            const current = initialCapital + net;
+            const display = document.getElementById('currentBalance');
+            const capDisplay = document.getElementById('displayInitialCapital');
+            
+            capDisplay.innerText = initialCapital.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            display.innerText = current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            display.className = `text-sm font-extrabold ${net >= 0 ? 'text-emerald-600' : 'text-rose-500'}`;
+
+            document.getElementById('statTotal').innerText = trades.length;
+            const totalOutcomes = wins + losses;
+            const wr = totalOutcomes > 0 ? ((wins / totalOutcomes) * 100).toFixed(0) : 0;
+            document.getElementById('statWinRate').innerText = `${wr}%`;
+            document.getElementById('winRateFill').style.width = `${wr}%`;
+            document.getElementById('statDuration').innerText = uniqueDates.size;
+        }
+
+        function toggleDetails(id) {
+            const row = document.getElementById(`details-${id}`);
+            const btn = document.getElementById(`btn-${id}`);
+            if (!row) return;
+            const isActive = row.classList.toggle('active');
+            btn.innerText = isActive ? 'Close' : 'View';
+            btn.className = isActive ? 'action-pill bg-slate-800 text-white cursor-pointer' : 'action-pill bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer';
+        }
+
+        function render() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-20 text-slate-400">No trade data found in data.json</td></tr>';
+                calculateStats();
+                return;
+            }
+
+            // Reverse to show newest first
+            const sortedTrades = [...trades].reverse();
+
+            sortedTrades.forEach((trade, index) => {
+                const tradeId = trade.id || `trade-${index}`;
+                const net = (parseFloat(trade.pnl) || 0) - (parseFloat(trade.commission) || 0);
+                const pnlColor = net > 0 ? 'text-emerald-600' : (net < 0 ? 'text-rose-500' : 'text-slate-400');
+                const outcomeClass = trade.result === 'Win' ? 'win-tag' : (trade.result === 'Loss' ? 'loss-tag' : 'be-tag');
+
+                const tr = document.createElement('tr');
+                tr.className = "group";
+                tr.innerHTML = `
+                    <td class="text-center text-slate-300 text-[10px] font-bold">${trades.length - index}</td>
+                    <td><span class="read-only-val text-slate-500">${trade.date || '---'}</span></td>
+                    <td><span class="read-only-val font-extrabold tracking-tight uppercase">${trade.asset || '---'}</span></td>
+                    <td><span class="read-only-val font-semibold ${trade.type === 'Long' ? 'text-emerald-600' : 'text-rose-600'}">${trade.type || '---'}</span></td>
+                    <td><span class="action-pill ${outcomeClass}">${trade.result || '---'}</span></td>
+                    <td class="text-right font-mono text-slate-500"><span class="read-only-val">${trade.r_multiple || '0'}</span></td>
+                    <td class="text-right font-mono text-slate-400"><span class="read-only-val">${parseFloat(trade.commission || 0).toFixed(2)}</span></td>
+                    <td class="text-right font-mono font-bold ${pnlColor}"><span class="read-only-val">${parseFloat(trade.pnl || 0).toFixed(2)}</span></td>
+                    <td class="text-center">
+                        ${trade.chart ? `<a href="${trade.chart}" target="_blank" class="text-indigo-500 hover:text-indigo-700 font-bold text-[10px] uppercase underline decoration-2 underline-offset-4">Chart</a>` : `<span class="text-slate-200 text-[10px]">---</span>`}
+                    </td>
+                    <td class="text-center">
+                        <span id="btn-${tradeId}" onclick="toggleDetails('${tradeId}')" class="action-pill bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer">View</span>
+                    </td>
+                `;
+
+                const detailTr = document.createElement('tr');
+                detailTr.id = `details-${tradeId}`;
+                detailTr.className = 'details-row';
+                detailTr.innerHTML = `
+                    <td colspan="10">
+                        <div class="details-grid">
+                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Strategy</label><span class="read-only-val">${trade.setup || 'Not specified'}</span></div>
+                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Entry Price</label><span class="read-only-val font-mono">${trade.entry || '---'}</span></div>
+                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Stop Loss</label><span class="read-only-val font-mono">${trade.sl || '---'}</span></div>
+                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Risk Amount</label><span class="read-only-val font-mono">$${parseFloat(trade.size || 0).toFixed(2)}</span></div>
+                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Exit Price</label><span class="read-only-val font-mono">${trade.exit || '---'}</span></div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                tbody.appendChild(detailTr);
+            });
+            calculateStats();
+        }
+
+        function showModal(type) {
+            const mod = document.getElementById('modalContainer');
+            mod.innerHTML = `
+                <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
+                    <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl">
+                        <h2 class="text-lg font-black mb-4">Risk Disclosure</h2>
+                        <p class="text-sm text-slate-500 leading-relaxed mb-8">This is a read-only journal for performance transparency. Past performance does not guarantee future results.</p>
+                        <button onclick="document.getElementById('modalContainer').innerHTML=''" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm">Close</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
