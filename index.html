@@ -2,258 +2,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEELX Trader | Premium Trade Journal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NEELX Trader | Mobile Journal</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M30 40v20M30 45h6v10h-6zM50 30v40M50 35h6v30h-6zM70 50v20M70 55h6v10h-6z%22 stroke=%22%23818cf8%22 stroke-width=%224%22 fill=%22none%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(226, 232, 240, 0.8);
-        }
-
-        html, body {
-            height: 100%;
-            margin: 0;
-            overflow: hidden;
-        }
-
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at top right, #f1f5f9, #ffffff);
+            background-color: #f8fafc;
             color: #1e293b;
-            display: flex;
-            flex-direction: column;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .app-shell {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 0 1.5rem;
+        .safe-top { padding-top: env(safe-area-inset-top); }
+
+        /* Custom scrollbar for mobile */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .trade-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        header {
-            flex-shrink: 0;
-            padding: 1.5rem 0;
+        .trade-card:active {
+            transform: scale(0.98);
+            background-color: #f1f5f9;
         }
 
-        .table-container-outer {
-            flex: 1;
-            min-height: 0;
-            margin-bottom: 1rem;
-            display: flex;
-            flex-direction: column;
+        .details-pane {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
         }
 
-        .table-wrap {
-            flex: 1;
-            overflow: auto;
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            position: relative;
+        .details-pane.open {
+            max-height: 500px;
         }
 
-        footer {
-            flex-shrink: 0;
-            padding: 1rem 0;
-            border-top: 1px solid #f1f5f9;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
+        .win-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .loss-gradient { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .be-gradient { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
 
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            min-width: 1100px;
-        }
-
-        thead th {
-            position: sticky;
-            top: 0;
-            z-index: 30;
-            background: rgba(255, 255, 255, 0.95);
+        .stat-blur {
             backdrop-filter: blur(8px);
-            border-bottom: 1px solid #f1f5f9;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.65rem;
-            letter-spacing: 0.075em;
-            padding: 1.25rem 1rem;
-            color: #64748b;
+            background: rgba(255, 255, 255, 0.8);
         }
 
-        td {
-            border-bottom: 1px solid #f8fafc;
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        tr:hover td {
-            background-color: #fcfdfe;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1rem 1.25rem;
-            border-radius: 18px;
-            border: 1px solid #f1f5f9;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-width: 140px;
-        }
-
-        .details-row { background: #fbfcfe; display: none; }
-        .details-row.active { display: table-row; }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.5rem;
-            padding: 2rem;
-            margin: 1rem;
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #f1f5f9;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-        }
-
-        .win-tag { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
-        .loss-tag { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
-        .be-tag { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
-
-        .action-pill {
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .read-only-cell {
-            padding: 0.5rem;
-            font-weight: 500;
-            display: block;
-        }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; border: 2px solid white; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        /* Prevent layout shift on load */
+        #tradeList { min-height: 300px; }
     </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
     <div id="modalContainer"></div>
 
-    <div class="app-shell">
-        <header>
-            <div class="flex flex-col lg:flex-row justify-between items-end lg:items-center gap-6">
-                <div class="flex items-center gap-5">
-                    <div class="bg-slate-900 p-2.5 rounded-2xl shadow-xl shadow-slate-200">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Header / Stats Section -->
+    <header class="safe-top bg-white border-b border-slate-100 sticky top-0 z-50">
+        <div class="px-5 py-4">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 p-2 rounded-xl shadow-lg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5">
                             <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
                             <polyline points="16 7 22 7 22 13"></polyline>
                         </svg>
                     </div>
                     <div>
-                        <div class="flex items-center gap-3">
-                            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">NEELX Trader.<h3 class="text-xl" >Profits Target: $500</h3></h1>
-                            <span id="syncStatus" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-bold uppercase tracking-widest">
-                                JSON SYNCED
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-6 mt-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Initial Capital</span>
-                                <span id="displayCap" class="text-sm font-bold text-slate-600">$0.00</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Live Capital</span>
-                                <span id="currentBalance" class="text-sm font-extrabold text-slate-900">$0.00</span>
-                            </div>
-                        </div>
+                        <h1 class="text-lg font-extrabold text-slate-900 leading-none">NEELX Trader</h1>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Mobile Terminal</p>
                     </div>
                 </div>
-
-                <div class="flex items-stretch gap-3 overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
-                    <div class="stat-card">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Trades</span>
-                        <span id="statTotal" class="text-lg font-extrabold leading-none">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Win Rate</span>
-                        <div class="flex items-center gap-2">
-                            <span id="statWinRate" class="text-lg font-extrabold leading-none text-indigo-600">0%</span>
-                            <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div id="winRateFill" class="h-full bg-indigo-500 transition-all duration-700" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Trading Days</span>
-                        <span id="statDuration" class="text-lg font-extrabold leading-none">0</span>
-                    </div>
+                <div id="syncStatus" class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-tighter border border-emerald-100">
+                    LIVE SYNC
                 </div>
+            </div>
 
-                <div class="flex items-center gap-2">
-                    <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ongoing</span>
+            <div class="bg-slate-900 rounded-2xl p-4 text-white shadow-xl shadow-slate-200 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="white"><path d="M22 7L13.5 15.5L8.5 10.5L2 17H22V7Z"/></svg>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Balance</p>
+                    <div class="flex items-baseline gap-2">
+                        <h2 id="currentBalance" class="text-3xl font-black">$0.00</h2>
+                        <span id="pnlPercent" class="text-xs font-bold text-emerald-400">+0.00%</span>
+                    </div>
+                    <div class="flex gap-4 mt-4 pt-4 border-t border-slate-800">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase">Initial</p>
+                            <p id="displayCap" class="text-sm font-bold text-slate-200">$0.00</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase">Win Rate</p>
+                            <p id="statWinRate" class="text-sm font-bold text-indigo-400">0%</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase">Trades</p>
+                            <p id="statTotal" class="text-sm font-bold text-slate-200">0</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <main class="table-container-outer">
-            <div class="table-wrap">
-                <table id="journalTable">
-                    <thead>
-                        <tr>
-                            <th class="w-12">#</th>
-                            <th class="w-40">Date</th>
-                            <th class="w-40">Instrument</th>
-                            <th class="w-24">Side</th>
-                            <th class="w-32">Outcome</th>
-                            <th class="text-right w-28">R Multiple</th>
-                            <th class="text-right w-28">Fees</th>
-                            <th class="text-right w-36 font-bold">Net PnL</th>
-                            <th class="text-center w-24">Review</th>
-                            <th class="text-center w-32">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="10" class="text-center py-20 text-slate-400">Fetching journal data...</td></tr>
-                    </tbody>
-                </table>
+    <!-- Main Content (Trade Feed) -->
+    <main class="flex-1 px-5 py-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Recent Activity</h3>
+            <div class="text-[10px] font-bold text-slate-400">
+                <span id="statDuration">0</span> TRADING DAYS
             </div>
-        </main>
+        </div>
 
-        <footer>
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <p>&copy; <span id="year"></span> Swapneel Das &bull; Professional Journal</p>
-                <div class="flex gap-6">
-                    <span class="hover:text-slate-600 cursor-pointer transition" onclick="showModal('disclaimer')">Disclaimer</span>
-                </div>
+        <div id="tradeList" class="space-y-4">
+            <!-- Skeleton Loader -->
+            <div class="animate-pulse flex flex-col gap-4">
+                <div class="h-24 bg-slate-200 rounded-2xl w-full"></div>
+                <div class="h-24 bg-slate-200 rounded-2xl w-full"></div>
+                <div class="h-24 bg-slate-200 rounded-2xl w-full"></div>
             </div>
-        </footer>
-    </div>
+        </div>
+    </main>
+
+    <!-- Mobile Footer -->
+    <footer class="bg-white border-t border-slate-100 px-6 py-4 pb-8">
+        <div class="flex justify-between items-center">
+            <p class="text-[10px] text-slate-400 font-bold uppercase">&copy; 2024 Swapneel Das</p>
+            <button onclick="showModal('disclaimer')" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Disclaimer</button>
+        </div>
+    </footer>
 
     <script>
         let trades = [];
         let initialCapital = 0;
-        document.getElementById('year').textContent = new Date().getFullYear();
 
         async function loadData() {
             try {
+                // cache busting with timestamp
                 const response = await fetch(`data.json?t=${Date.now()}`);
                 if (!response.ok) throw new Error("Could not find data.json");
                 
@@ -264,13 +152,13 @@
                 render();
             } catch (err) {
                 console.error(err);
-                document.getElementById('tableBody').innerHTML = `
-                    <tr>
-                        <td colspan="10" class="text-center py-20">
-                            <div class="text-rose-500 font-bold">Failed to load data.json</div>
-                            <div class="text-slate-400 text-xs mt-2 uppercase">Please run this via a local server (e.g. VS Code Live Server)</div>
-                        </td>
-                    </tr>`;
+                document.getElementById('tradeList').innerHTML = `
+                    <div class="text-center py-10">
+                        <div class="bg-rose-50 text-rose-500 p-4 rounded-2xl text-xs font-bold border border-rose-100">
+                            DATA NOT FOUND<br>
+                            <span class="font-normal opacity-70">Ensure data.json is in the same folder and use a local server.</span>
+                        </div>
+                    </div>`;
             }
         }
 
@@ -286,83 +174,106 @@
             });
 
             const current = initialCapital + net;
-            document.getElementById('displayCap').innerText = initialCapital.toLocaleString(undefined, { minimumFractionDigits: 2 });
-            const display = document.getElementById('currentBalance');
-            display.innerText = current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            display.className = `text-sm font-extrabold ${net >= 0 ? 'text-emerald-600' : 'text-rose-500'}`;
+            const growth = initialCapital > 0 ? ((net / initialCapital) * 100).toFixed(2) : "0.00";
+            
+            document.getElementById('displayCap').innerText = `$${initialCapital.toLocaleString()}`;
+            document.getElementById('currentBalance').innerText = `$${current.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+            
+            const pnlEl = document.getElementById('pnlPercent');
+            pnlEl.innerText = `${net >= 0 ? '+' : ''}${growth}%`;
+            pnlEl.className = `text-xs font-bold ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
             document.getElementById('statTotal').innerText = trades.length;
             const totalOutcomes = wins + losses;
             const wr = totalOutcomes > 0 ? ((wins / totalOutcomes) * 100).toFixed(0) : 0;
             document.getElementById('statWinRate').innerText = `${wr}%`;
-            document.getElementById('winRateFill').style.width = `${wr}%`;
             document.getElementById('statDuration').innerText = uniqueDates.size;
         }
 
         function toggleDetails(id) {
-            const row = document.getElementById(`details-${id}`);
-            const btn = document.getElementById(`btn-${id}`);
-            const isActive = row.classList.toggle('active');
-            btn.innerText = isActive ? 'Close' : 'View';
-            btn.className = isActive ? 'action-pill bg-slate-800 text-white cursor-pointer' : 'action-pill bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer';
+            const pane = document.getElementById(`pane-${id}`);
+            const chevron = document.getElementById(`chev-${id}`);
+            const isOpen = pane.classList.toggle('open');
+            chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
         function render() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+            const container = document.getElementById('tradeList');
+            container.innerHTML = '';
 
-            // STATED REQUIREMENT: Sort by Date (Newest to Oldest)
-            // We use the date string for primary sort, and ID (timestamp) for secondary sort
             const sortedTrades = [...trades].sort((a, b) => {
                 const dateA = new Date(a.date);
                 const dateB = new Date(b.date);
                 if (dateA > dateB) return -1;
                 if (dateA < dateB) return 1;
-                // If same date, sort by ID (the timestamp when created)
                 return b.id - a.id;
             });
+
+            if (sortedTrades.length === 0) {
+                container.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold text-sm">No trades logged yet</div>';
+                return;
+            }
 
             sortedTrades.forEach((trade, index) => {
                 const tradeId = trade.id || index;
                 const net = (parseFloat(trade.pnl) || 0) - (parseFloat(trade.commission) || 0);
-                const pnlColor = net > 0 ? 'text-emerald-600' : (net < 0 ? 'text-rose-500' : 'text-slate-400');
-                const outcomeClass = trade.result === 'Win' ? 'win-tag' : (trade.result === 'Loss' ? 'loss-tag' : 'be-tag');
+                const isWin = trade.result === 'Win';
+                const isLoss = trade.result === 'Loss';
+                const gradClass = isWin ? 'win-gradient' : (isLoss ? 'loss-gradient' : 'be-gradient');
+                const pnlColor = net > 0 ? 'text-emerald-600' : (net < 0 ? 'text-rose-500' : 'text-slate-500');
 
-                const tr = document.createElement('tr');
-                tr.className = "group";
-                tr.innerHTML = `
-                    <td class="text-center text-slate-300 text-[10px] font-bold">${trades.length - index}</td>
-                    <td><span class="read-only-cell text-slate-500">${trade.date}</span></td>
-                    <td><span class="read-only-cell font-extrabold tracking-tight uppercase">${trade.asset}</span></td>
-                    <td><span class="read-only-cell font-semibold ${trade.type === 'Long' ? 'text-emerald-600' : 'text-rose-600'}">${trade.type}</span></td>
-                    <td><span class="action-pill ${outcomeClass}">${trade.result}</span></td>
-                    <td class="text-right font-mono text-slate-500"><span class="read-only-cell">${trade.r_multiple || '0'}</span></td>
-                    <td class="text-right font-mono text-slate-400"><span class="read-only-cell">${parseFloat(trade.commission || 0).toFixed(2)}</span></td>
-                    <td class="text-right font-mono font-bold ${pnlColor}"><span class="read-only-cell">${parseFloat(trade.pnl || 0).toFixed(2)}</span></td>
-                    <td class="text-center">
-                        ${trade.chart ? `<a href="${trade.chart}" target="_blank" class="text-indigo-500 hover:text-indigo-700 font-bold text-[10px] uppercase underline underline-offset-4">Chart</a>` : `<span class="text-slate-200 text-[10px]">---</span>`}
-                    </td>
-                    <td class="text-center">
-                        <span id="btn-${tradeId}" onclick="toggleDetails('${tradeId}')" class="action-pill bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer">View</span>
-                    </td>
-                `;
-
-                const detailTr = document.createElement('tr');
-                detailTr.id = `details-${tradeId}`;
-                detailTr.className = 'details-row';
-                detailTr.innerHTML = `
-                    <td colspan="10">
-                        <div class="details-grid">
-                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Strategy</label><div class="font-medium">${trade.setup || '---'}</div></div>
-                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Entry</label><div class="font-mono">${trade.entry || '---'}</div></div>
-                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Stop Loss</label><div class="font-mono">${trade.sl || '---'}</div></div>
-                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Risk $</label><div class="font-mono">$${parseFloat(trade.size || 0).toFixed(2)}</div></div>
-                            <div class="flex flex-col gap-1.5"><label class="text-[10px] font-bold text-slate-400 uppercase">Exit</label><div class="font-mono">${trade.exit || '---'}</div></div>
+                const card = document.createElement('div');
+                card.className = "trade-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden";
+                card.onclick = () => toggleDetails(tradeId);
+                
+                card.innerHTML = `
+                    <div class="p-4 flex items-center gap-4">
+                        <div class="w-1.5 h-10 rounded-full ${gradClass}"></div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-black text-slate-900 uppercase tracking-tight">${trade.asset}</h4>
+                                <span class="text-xs font-black ${pnlColor}">$${net.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-0.5">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">${trade.date}</p>
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${trade.type} • ${trade.r_multiple}R</span>
+                            </div>
                         </div>
-                    </td>
+                        <div id="chev-${tradeId}" class="transition-transform duration-300">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    
+                    <div id="pane-${tradeId}" class="details-pane bg-slate-50">
+                        <div class="p-5 grid grid-cols-2 gap-y-4 gap-x-6 border-t border-slate-100">
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Strategy</label>
+                                <p class="text-xs font-bold text-slate-700">${trade.setup || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Outcome</label>
+                                <p class="text-xs font-bold ${pnlColor}">${trade.result}</p>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Entry Price</label>
+                                <p class="text-xs font-mono font-bold">${trade.entry || '---'}</p>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Exit Price</label>
+                                <p class="text-xs font-mono font-bold">${trade.exit || '---'}</p>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Risk Taken</label>
+                                <p class="text-xs font-mono font-bold text-slate-600">$${parseFloat(trade.size || 0).toFixed(2)}</p>
+                            </div>
+                             <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Analysis</label>
+                                ${trade.chart ? `<a href="${trade.chart}" target="_blank" class="text-xs font-bold text-indigo-600 underline" onclick="event.stopPropagation()">View Chart</a>` : '<span class="text-xs font-bold text-slate-300">No Chart</span>'}
+                            </div>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
-                tbody.appendChild(detailTr);
+                container.appendChild(card);
             });
             calculateStats();
         }
@@ -370,11 +281,15 @@
         function showModal(type) {
             const mod = document.getElementById('modalContainer');
             mod.innerHTML = `
-                <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
-                    <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl">
-                        <h2 class="text-lg font-black mb-4">Disclosure</h2>
-                        <p class="text-sm text-slate-500 leading-relaxed mb-8">This dashboard pulls data directly from data.json for transparent performance tracking.</p>
-                        <button onclick="document.getElementById('modalContainer').innerHTML=''" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm">Close</button>
+                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-4">
+                    <div class="bg-white rounded-t-[32px] sm:rounded-[32px] p-8 w-full max-w-sm shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6"></div>
+                        <h2 class="text-xl font-black mb-4">Journal Disclosure</h2>
+                        <p class="text-sm text-slate-500 leading-relaxed mb-8">
+                            This mobile terminal provides a read-only interface to your <span class="font-bold text-slate-900">data.json</span>. 
+                            Performance metrics are calculated in real-time based on your trade history.
+                        </p>
+                        <button onclick="document.getElementById('modalContainer').innerHTML=''" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-200 active:scale-95 transition-transform">Got it</button>
                     </div>
                 </div>
             `;
