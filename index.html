@@ -247,16 +247,16 @@
                     <div id="pane-${tradeId}" class="details-pane bg-slate-50">
                         <div class="p-5 grid grid-cols-2 gap-y-4 gap-x-6 border-t border-slate-100">
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Strategy</label>
-                                <p class="text-xs font-bold text-slate-700">${trade.setup || 'N/A'}</p>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Entry Price</label>
+                                <p class="text-xs font-mono font-bold">${trade.entry || '---'}</p>
                             </div>
                             <div>
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Outcome</label>
                                 <p class="text-xs font-bold ${pnlColor}">${trade.result}</p>
                             </div>
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Entry Price</label>
-                                <p class="text-xs font-mono font-bold">${trade.entry || '---'}</p>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Stop Loss</label>
+                                <p class="text-xs font-mono font-bold text-rose-400">${trade.stop_loss || '---'}</p>
                             </div>
                             <div>
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Exit Price</label>
