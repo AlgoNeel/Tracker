@@ -19,7 +19,6 @@
 
         .safe-top { padding-top: env(safe-area-inset-top); }
 
-        /* Custom scrollbar for mobile */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
@@ -35,23 +34,26 @@
         .details-pane {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .details-pane.open {
-            max-height: 500px;
+            max-height: 800px;
         }
 
         .win-gradient { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
         .loss-gradient { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
         .be-gradient { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
+        .running-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
 
-        .stat-blur {
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.8);
+        @keyframes pulse-blue {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        /* Prevent layout shift on load */
         #tradeList { min-height: 300px; }
     </style>
 </head>
@@ -108,7 +110,7 @@
         </div>
     </header>
 
-    <!-- Main Content (Trade Feed) -->
+    <!-- Main Content -->
     <main class="flex-1 px-5 py-6">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Recent Activity</h3>
@@ -118,16 +120,13 @@
         </div>
 
         <div id="tradeList" class="space-y-4">
-            <!-- Skeleton Loader -->
             <div class="animate-pulse flex flex-col gap-4">
-                <div class="h-24 bg-slate-200 rounded-2xl w-full"></div>
                 <div class="h-24 bg-slate-200 rounded-2xl w-full"></div>
                 <div class="h-24 bg-slate-200 rounded-2xl w-full"></div>
             </div>
         </div>
     </main>
 
-    <!-- Mobile Footer -->
     <footer class="bg-white border-t border-slate-100 px-6 py-4 pb-8">
         <div class="flex justify-between items-center">
             <p class="text-[10px] text-slate-400 font-bold uppercase">&copy; 2024 Swapneel Das</p>
@@ -141,7 +140,6 @@
 
         async function loadData() {
             try {
-                // cache busting with timestamp
                 const response = await fetch(`data.json?t=${Date.now()}`);
                 if (!response.ok) throw new Error("Could not find data.json");
                 
@@ -152,13 +150,7 @@
                 render();
             } catch (err) {
                 console.error(err);
-                document.getElementById('tradeList').innerHTML = `
-                    <div class="text-center py-10">
-                        <div class="bg-rose-50 text-rose-500 p-4 rounded-2xl text-xs font-bold border border-rose-100">
-                            DATA NOT FOUND<br>
-                            <span class="font-normal opacity-70">Ensure data.json is in the same folder and use a local server.</span>
-                        </div>
-                    </div>`;
+                document.getElementById('tradeList').innerHTML = `<div class="text-center py-10 text-rose-500 text-xs font-bold">DATA ERROR</div>`;
             }
         }
 
@@ -178,14 +170,11 @@
             
             document.getElementById('displayCap').innerText = `$${initialCapital.toLocaleString()}`;
             document.getElementById('currentBalance').innerText = `$${current.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-            
             const pnlEl = document.getElementById('pnlPercent');
             pnlEl.innerText = `${net >= 0 ? '+' : ''}${growth}%`;
             pnlEl.className = `text-xs font-bold ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-
             document.getElementById('statTotal').innerText = trades.length;
-            const totalOutcomes = wins + losses;
-            const wr = totalOutcomes > 0 ? ((wins / totalOutcomes) * 100).toFixed(0) : 0;
+            const wr = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(0) : 0;
             document.getElementById('statWinRate').innerText = `${wr}%`;
             document.getElementById('statDuration').innerText = uniqueDates.size;
         }
@@ -201,29 +190,34 @@
             const container = document.getElementById('tradeList');
             container.innerHTML = '';
 
-            const sortedTrades = [...trades].sort((a, b) => {
-                const dateA = new Date(a.date);
-                const dateB = new Date(b.date);
-                if (dateA > dateB) return -1;
-                if (dateA < dateB) return 1;
-                return b.id - a.id;
-            });
-
-            if (sortedTrades.length === 0) {
-                container.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold text-sm">No trades logged yet</div>';
-                return;
-            }
+            const sortedTrades = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
 
             sortedTrades.forEach((trade, index) => {
                 const tradeId = trade.id || index;
+                const isRunning = !trade.exit || trade.exit === "";
                 const net = (parseFloat(trade.pnl) || 0) - (parseFloat(trade.commission) || 0);
-                const isWin = trade.result === 'Win';
-                const isLoss = trade.result === 'Loss';
-                const gradClass = isWin ? 'win-gradient' : (isLoss ? 'loss-gradient' : 'be-gradient');
-                const pnlColor = net > 0 ? 'text-emerald-600' : (net < 0 ? 'text-rose-500' : 'text-slate-500');
+                
+                // Set color indicators
+                let gradClass = 'be-gradient';
+                let pnlDisplay = `$${net.toFixed(2)}`;
+                let statusLabel = "CLOSED";
+                let statusColor = "text-slate-400";
+
+                if (isRunning) {
+                    gradClass = 'running-gradient animate-pulse-slow';
+                    pnlDisplay = "---";
+                    statusLabel = "RUNNING";
+                    statusColor = "text-blue-500";
+                } else if (trade.result === 'Win') {
+                    gradClass = 'win-gradient';
+                    statusColor = "text-emerald-500";
+                } else if (trade.result === 'Loss') {
+                    gradClass = 'loss-gradient';
+                    statusColor = "text-rose-500";
+                }
 
                 const card = document.createElement('div');
-                card.className = "trade-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden";
+                card.className = "trade-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-4";
                 card.onclick = () => toggleDetails(tradeId);
                 
                 card.innerHTML = `
@@ -232,11 +226,11 @@
                         <div class="flex-1">
                             <div class="flex justify-between items-start">
                                 <h4 class="font-black text-slate-900 uppercase tracking-tight">${trade.asset}</h4>
-                                <span class="text-xs font-black ${pnlColor}">$${net.toFixed(2)}</span>
+                                <span class="text-xs font-black ${isRunning ? 'text-blue-500' : (net >= 0 ? 'text-emerald-600' : 'text-rose-500')}">${pnlDisplay}</span>
                             </div>
                             <div class="flex justify-between items-center mt-0.5">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase">${trade.date}</p>
-                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${trade.type} • ${trade.r_multiple}R</span>
+                                <span class="text-[9px] font-black ${statusColor} uppercase tracking-widest">${statusLabel} • ${trade.r_multiple || '0'}R</span>
                             </div>
                         </div>
                         <div id="chev-${tradeId}" class="transition-transform duration-300">
@@ -247,24 +241,32 @@
                     <div id="pane-${tradeId}" class="details-pane bg-slate-50">
                         <div class="p-5 grid grid-cols-2 gap-y-4 gap-x-6 border-t border-slate-100">
                             <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Status</label>
+                                <p class="text-xs font-bold ${statusColor}">${statusLabel}</p>
+                            </div>
+                            <div>
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Entry Price</label>
                                 <p class="text-xs font-mono font-bold">${trade.entry || '---'}</p>
                             </div>
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Outcome</label>
-                                <p class="text-xs font-bold ${pnlColor}">${trade.result}</p>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Stop Loss</label>
+                                <p class="text-xs font-mono font-bold text-rose-400">${trade.sl || trade.stop_loss || '---'}</p>
                             </div>
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Stop Loss</label>
-                                <p class="text-xs font-mono font-bold text-rose-400">${trade.stop_loss || '---'}</p>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Take Profit</label>
+                                <p class="text-xs font-mono font-bold text-emerald-500">${trade.tp || '---'}</p>
                             </div>
                             <div>
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Exit Price</label>
-                                <p class="text-xs font-mono font-bold">${trade.exit || '---'}</p>
+                                <p class="text-xs font-mono font-bold ${isRunning ? 'text-slate-300' : ''}">${trade.exit || 'OPEN'}</p>
                             </div>
                             <div>
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Risk Taken</label>
                                 <p class="text-xs font-mono font-bold text-slate-600">$${parseFloat(trade.size || 0).toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Fees</label>
+                                <p class="text-xs font-mono font-bold text-slate-400">$${parseFloat(trade.commission || 0).toFixed(2)}</p>
                             </div>
                              <div>
                                 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Analysis</label>
@@ -284,12 +286,11 @@
                 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-4">
                     <div class="bg-white rounded-t-[32px] sm:rounded-[32px] p-8 w-full max-w-sm shadow-2xl animate-in slide-in-from-bottom duration-300">
                         <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6"></div>
-                        <h2 class="text-xl font-black mb-4">Journal Disclosure</h2>
+                        <h2 class="text-xl font-black mb-4">Journal Info</h2>
                         <p class="text-sm text-slate-500 leading-relaxed mb-8">
-                            This mobile terminal provides a read-only interface to your <span class="font-bold text-slate-900">data.json</span>. 
-                            Performance metrics are calculated in real-time based on your trade history.
+                            Trades with an empty "Exit" price are marked as <span class="text-blue-500 font-bold">RUNNING</span>.
                         </p>
-                        <button onclick="document.getElementById('modalContainer').innerHTML=''" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-200 active:scale-95 transition-transform">Got it</button>
+                        <button onclick="document.getElementById('modalContainer').innerHTML=''" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm">Got it</button>
                     </div>
                 </div>
             `;
