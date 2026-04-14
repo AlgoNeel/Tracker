@@ -1,6 +1,23 @@
 {
   "trades": [
     {
+      "id": 1776143258188,
+      "date": "2026-04-14",
+      "asset": "btc",
+      "type": "Short",
+      "setup": "FVG",
+      "chart": "",
+      "entry": "74616",
+      "sl": "74965",
+      "tp": "",
+      "size": "10.47",
+      "exit": "",
+      "result": "BE",
+      "r_multiple": "2.1",
+      "pnl": "",
+      "commission": "0.48"
+    },
+    {
       "id": 1776071214042,
       "date": "2026-04-13",
       "asset": "btc",
