@@ -6,15 +6,15 @@
       "asset": "btc",
       "type": "Long",
       "setup": "FVG",
-      "chart": "",
+      "chart": "https://www.tradingview.com/x/75d6iwIW/",
       "entry": "74784.97",
       "sl": "74492.32",
       "tp": "",
       "size": "17.56",
-      "exit": "",
-      "result": "BE",
-      "r_multiple": "",
-      "pnl": "",
+      "exit": "75436.61",
+      "result": "Win",
+      "r_multiple": "2.23",
+      "pnl": "39.10",
       "commission": "0.96"
     },
     {
@@ -64,7 +64,7 @@
       "size": "49.49",
       "exit": "71730.91",
       "result": "Win",
-      "r_multiple": "3.01",
+      "r_multiple": "1.41",
       "pnl": "70.64",
       "commission": "1.44"
     }
