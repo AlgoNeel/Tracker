@@ -1,6 +1,23 @@
 {
   "trades": [
     {
+      "id": 1776504637202,
+      "date": "2026-04-18",
+      "asset": "btc",
+      "type": "Long",
+      "setup": "FIB",
+      "chart": "https://www.tradingview.com/x/w5pSrts7/",
+      "entry": "76596",
+      "sl": "76223",
+      "tp": "",
+      "size": "11.19",
+      "exit": "76223",
+      "result": "Loss",
+      "r_multiple": "2.93",
+      "pnl": "-11.19",
+      "commission": "0.48"
+    },
+    {
       "id": 1776469903853,
       "date": "2026-04-18",
       "asset": "BTC",
