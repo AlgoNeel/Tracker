@@ -1,6 +1,23 @@
 {
   "trades": [
     {
+      "id": 1776469903853,
+      "date": "2026-04-18",
+      "asset": "BTC",
+      "type": "Short",
+      "setup": "FVG",
+      "chart": "https://www.tradingview.com/x/hSRB0NA9/",
+      "entry": "77345",
+      "sl": "77518.71",
+      "tp": "",
+      "size": "13.86",
+      "exit": "76834.42",
+      "result": "Win",
+      "r_multiple": "2.94",
+      "pnl": "40.89",
+      "commission": "1.28"
+    },
+    {
       "id": 1776400216434,
       "date": "2026-04-17",
       "asset": "btc",
